@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package common;  //version 0.0.7
+option java_multiple_files = true;
+option java_package = "net.skyscanner.halo.megastorm.api.rest.schema";
+//option java_validate = "";
+
+message City {
+    string city_name = 1; //validate[null, empty]
+
+    string iata_location_code = 2; //validate[null, empty, regex()]
+
+    Date date = 3; //validate[null]
+}
+
+message Date {
+    // The year of this date
+    int32 year = 1; //validate[ min(1990)]
+
+    // The month of this date in the range 1 <= month <= 12
+    int32 month = 2; //validate[ max(12),  min(1)]
+
+    // The day of this date in the range 1 <= day <= 31
+    int32 day = 3; //validate[ max(32), min(0)]
+}
