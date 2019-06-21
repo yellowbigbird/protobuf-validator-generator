@@ -3,32 +3,13 @@
 import sys
 import os
 
+from src.util_file import UtilFile
+
 
 class UtilConverter:
-    @staticmethod
-    def read_file(file_name):
-        # os.path.join(folder, file_name)
-        with open(file_name) as file:
-            result = file.read()
-            file.close()
-        return result
-
-    @staticmethod
-    def read_file_in_lines(file_name):
-        # os.path.join(folder, file_name)
-        with open(file_name) as file:
-            result = file.readlines()
-            file.close()
-        return result
-
-    @staticmethod
-    def write_file_in_lines(file_path_name, file_content_new):
-        with open(file_path_name, 'w') as file:
-            file.writelines(file_content_new)
-            file.close()
 
     def convert(self, file_path_name, file_path_name_dest):
-        file_content = UtilConverter.read_file(file_path_name)
+        file_content = UtilFile.read_file(file_path_name)
         if 'proto3' in file_content:
             print("The file is proto3 format.")
             return

@@ -8,7 +8,7 @@ option java_package = "net.skyscanner.halo.megastorm.api.rest.schema";
 message City {
     string city_name = 1; //validate[null, empty]
 
-    string iata_location_code = 2; //validate[null, empty, regex()]
+    string iata_location_code = 2; //validate[null, empty, regex("^[A-Z]{3}$")]
 
     Date date = 3; //validate[null]
 }

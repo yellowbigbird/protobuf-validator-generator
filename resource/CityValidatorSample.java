@@ -23,7 +23,7 @@ public class CityValidator extends BaseValidator {
     }
 
     public void validateCityName(List<String> listStr){
-        String data = protoObj.getCityName();
+        var data = protoObj.getCityName();
         String name = "CityName";
 
         //checknull
@@ -34,7 +34,7 @@ public class CityValidator extends BaseValidator {
     }
 
     public void validateIataLocationCode(List<String> listStr){
-        String data = protoObj.getIataLocationCode();
+        var data = protoObj.getIataLocationCode();
         String name = "IataLocationCode";
 
         //checknull
@@ -52,7 +52,7 @@ public class CityValidator extends BaseValidator {
         String name = "Date";
 
         //checkNull
-        checkNull(data, name, listStr);
+        checkHas(protoObj.hasDate(), name, listStr);
 
         DateValidator validator = new DateValidator(data);
         listStr.addAll(validator.validate());

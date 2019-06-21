@@ -1,4 +1,6 @@
-from src.class_template import FUNCTION_TEMPLATE, VALIDATION_TEMPLATE
+from src.class_template import FUNCTION_TEMPLATE, VALIDATION_TEMPLATE_NO_PARAM, VALIDATION_TEMPLATE_WITH_PARAM, \
+    VALIDATION_TEMPLATE_OTHER_CLASS, VALIDATION_TEMPLATE_CHECK_HAS
+from src.proto.constaints import VALIDATION_NO_PARAM_LIST, VARIABLE_BASIC_TYPE_LIST
 
 
 class Variable:
@@ -59,24 +61,53 @@ class Variable:
 
     def generate(self)->str:
         content = FUNCTION_TEMPLATE
-        self.function_name = 'validate' + self.proto_name
+        self.function_name = 'validate{0}'.format(self.proto_name)
         content = content.replace('~function_name~', self.function_name)
         content = content.replace('~name~', self.name)
-        proto_get_function = 'get' + self.proto_name
+        proto_get_function = 'get{0}'.format(self.proto_name)
         content = content.replace('~proto_get_function~', proto_get_function)
 
         check_call = ''
         for validation in self.list_validation:
             check_call = check_call + self.generate_single_validation(validation)
+
+        # is basic type, add get summary
+        if self.str_type not in VARIABLE_BASIC_TYPE_LIST:
+            check_call = check_call + '\n' + self.generate_single_class_validation()
         content = content.replace('~check_call~', check_call)
 
-        print(content)
+        # print(content)
         return content
 
     def generate_single_validation(self, validation):
-        content = VALIDATION_TEMPLATE
-        content = content.replace('~check_param~', validation)
-        content = content.replace('~check_name~', validation.title())
+        content = VALIDATION_TEMPLATE_NO_PARAM if validation in VALIDATION_NO_PARAM_LIST \
+            else VALIDATION_TEMPLATE_WITH_PARAM
+
+        # get param
+        validation = validation.strip()
+        temp = validation.replace(')', '')
+        list1 = temp.split('(')
+        name = list1[0]
+        param = list1[1] if len(list1)>1 else ''
+
+        # is basic type
+        if self.str_type not in VARIABLE_BASIC_TYPE_LIST and name == 'null':
+            content = VALIDATION_TEMPLATE_CHECK_HAS
+            name = 'has'
+            content = content.replace('~proto_name~', self.proto_name)
+
+        content = content.replace('~FULL_VALIDATION~', validation)
+        content = content.replace('~CHECK_NAME~', name.title())
+        content = content.replace('~PARAM~', param)
+
+        # print(content)
+        return content
+
+    def generate_single_class_validation(self):
+        content = VALIDATION_TEMPLATE_OTHER_CLASS
+        other_validator_name = '{0}Validator'.format(self.str_type)
+        content = content.replace('~OTHER_VALIDATOR_NAME~', other_validator_name)
+        # print(content)
         return content
 
     @staticmethod
