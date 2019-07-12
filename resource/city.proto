@@ -6,11 +6,11 @@ option java_package = "net.skyscanner.halo.megastorm.api.rest.schema";
 //option java_validate = "";
 
 message City {
-    string city_name = 1; //validate[null, empty]
+    string city_name = 1; //validate[strEmpty]
 
-    string iata_location_code = 2; //validate[null, empty, regex("^[A-Z]{3}$")]
+    string iata_location_code = 2; //validate[strEmpty, regex("^[A-Z]{3}$")]
 
-    Date date = 3; //validate[null]
+    Date date = 3; //validate[has]
 }
 
 message Date {
@@ -22,4 +22,53 @@ message Date {
 
     // The day of this date in the range 1 <= day <= 31
     int32 day = 3; //validate[ max(32), min(0)]
+}
+
+// Example: 15000 USD
+message Price {
+    // The 3-letter currency code defined in ISO 4217.
+    string currency_code = 1; //validate[strEmpty, strMin(3), strMax(3), regex("^[A-Z]{3}$")]
+
+    // The whole units of the amount.
+    // For example if `currencyCode` is `"USD"`, then 1 unit is one US dollar.
+    int64 units = 2; //validate[ min(0)]
+
+    // Number of nano (10^-9) units of the amount.
+    // The value must be between -999,999,999 and +999,999,999 inclusive.
+    // If `units` is positive, `nanos` must be positive or zero.
+    // If `units` is zero, `nanos` can be positive, zero, or negative.
+    // If `units` is negative, `nanos` must be negative or zero.
+    // For example $-1.75 is represented as `units`=-1 and `nanos`=-750,000,000.
+    int32 nanos = 3; //validate[ max(999999999),  min(0)]
+}
+
+//to show no validation sample
+message Fee {
+    Price amount = 1; //validate[has]
+
+    // Fee/ surcharge Description.  Example: U.S Customs User Fee
+    string description = 2;
+}
+
+message CardSurcharge {
+    repeated Price fees = 1;
+    double percentage = 2; //validate[ max(100.00),  min(0)]
+    double surcharge_cap = 3;
+    Price total = 4; //validate[has]
+}
+
+message SelectedOfferItem {
+    string offer_item_id = 1; //validate[strEmpty, strMin(1) ]
+
+    // leg id list
+    repeated string leg_references = 2; //validate[ listMin(1)]
+
+    // segment id list
+    repeated string segment_references = 3; //validate[ listMin(1)]
+
+    // traveler id list
+    repeated string traveler_references = 4; //validate[ listMin(1)]
+
+    // if this is a seat service
+    string service_reference = 5;
 }

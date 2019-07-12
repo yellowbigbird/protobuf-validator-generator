@@ -1,0 +1,288 @@
+syntax = "proto3";
+
+package submit_booking; //version 0.0.9
+
+option java_package = "net.skyscanner.halo.megastorm.schema";
+option java_multiple_files = true;
+import "common.proto";
+
+message Carrier {
+    // Airline code assigned to a carrier. Either ICAO-defined 3-character code or IATA-defined 2-character code.
+    string carrier_code = 1;
+    string carrier_name = 2;
+
+    // The numerical designation of a flight as it is marketed by a carrier.
+    string flight_number_text = 3; //validate[strEmpty]
+
+    // Skyscanner id to identify Carriers.
+    // See https://confluence.skyscannertools.net/display/~michaelewins/Carrier+Examples for details.
+    string skyscanner_carrier_id = 4;
+}
+
+message IdentityDoc {
+    string doc_number = 1; //validate[strEmpty]
+
+    // The date the identity document expires.
+    common.Date expiry_date = 2;  //validate[has]
+
+    // The type of passenger document.  Examples: PT (Passport)
+    string identity_doc_type_code = 3;
+
+    // The date the identity document was issued.
+    common.Date issue_date = 4;
+
+    // ISO Country Code (can be extended by bilateral agreement in case of exceptions, e.g. Kosovo). Examples: US, FR.
+    string issuing_country_code = 5;
+    string residence_country_code = 6;
+}
+
+message PhoneInfo {
+    string area_code = 1;
+    string country_code = 2;
+    string phone_number = 3; //validate[strEmpty]
+}
+
+message PostalAddress {
+    string city = 1;
+    string country_code = 2;
+    string postal_code = 3;
+    string state = 4;
+    string street = 5;
+}
+
+// Represents a Date Time in a local timezone
+message LocalDateTime {
+    // The year of this date
+    int32 year = 1;
+    // The month of this date in the range 1 <= month <= 12
+    int32 month = 2;
+    // The day of this date in the range 1 <= day <= 31
+    int32 day = 3;
+    // The hour of the day in the range 0 <= hour < 24
+    int32 hours = 4;
+    // The minutes of the hour in the range 0 <= minutes < 60
+    int32 minutes = 5;
+    // The seconds of the minute in the range 0 <= seconds < 60
+    int32 seconds = 6;
+}
+
+message TransportInfo {
+    string airport_iata_code = 1;
+    LocalDateTime local_date_time = 2;
+}
+
+message FrequentFlyerInfo {
+    // Traveler Frequent Flyer (FQTV) Program Sponsoring Airline. Example: BA
+    string frequent_flyer_programme = 1;
+    // FQTV account number. Example: FQTV123456
+    string frequent_flyer_number = 2;
+}
+
+message TravelerInfo {
+    string traveler_id = 1;
+    common.Date date_of_birth = 2;
+    enum Gender {
+        GENDER_UNSET = 0;
+        GENDER_MALE = 1;
+        GENDER_FEMALE = 2;
+    }
+    Gender gender = 3;
+    IdentityDoc identity_doc = 4;
+
+    // Is this a lead passenger
+    bool lead = 5;
+    common.Name name = 6;
+    enum TravelerCategoryCode {
+        TRAVELER_CATEGORY_CODE_UNSET = 0;
+        TRAVELER_CATEGORY_CODE_CHD = 1;
+        TRAVELER_CATEGORY_CODE_INF = 2;
+        TRAVELER_CATEGORY_CODE_ADT = 3;
+    }
+    TravelerCategoryCode traveler_category_code = 7;
+    int32 age = 8;
+    // Citizenship country code. Examples: US, FR
+    string nationality = 9;
+    FrequentFlyerInfo frequent_flyer_info = 10;
+}
+
+message ContactInfo {
+    string contact_email = 1;
+    PhoneInfo phone_info = 2;
+    PhoneInfo other_phone_info = 3;
+    PostalAddress postal_address = 4;
+}
+
+message Leg {
+    string leg_id = 1;
+    TransportInfo destination = 2;
+    TransportInfo origin = 3;
+
+    // segment id list
+    repeated string segment_references = 4;
+    // A globally unique identifier for this OriginDestination instance. Example: origDest1
+    string origin_destination_key = 5;
+
+}
+
+message PaymentCard {
+    // A two-letter code assigned according to IATA Resolution 728. Example: VI for Visa
+    string card_brand_code = 1;
+    // Used to specify whether the card is a Consumer (personal) or Commercial (corporate) card.
+    string card_product_type_code = 2;
+    // Additional description for the magnetic stripe card type (debit card, credit card, prepaid card, etc.)
+    string card_type_text = 3;
+    string encrypted_card_number = 4;
+
+    // 3-digit number printed on the signature panel on the back of the card and following the last four digits of the
+    // Primary Account Number (PAN). For American Express,  4 digits located on the front of the card, above the card
+    // number on the right hand side. Visa - CVV2, MasterCard - CVC2, American Express - CID, Discover - CMID,
+    // Union Pay - CVN2, JCB - CAV2.
+    //
+    // It should be a nonce provided by Braintree since Skyscanner is not PCI compliance.
+    string encrypted_card_security_code = 5;
+
+    // The last month of validity Example: 0119
+    string expiration_date = 6;
+    ContactInfo holder_contact = 7;
+    common.Name holder_name = 8;
+}
+
+message PaymentMethod {
+    PaymentCard payment_card = 1;
+}
+
+message ClassOfService {
+    // Class of Service Code. Example: B
+    string code = 1;
+    // Cabin Class Marketing Name. Example: Premium Economy
+    string marketing_name = 2;
+}
+
+message Segment {
+    string segment_id = 1;
+    TransportInfo arrival = 2;
+    TransportInfo departure = 3;
+
+    // The commercial designation under which a Dated Operating Segment can be booked,
+    // either under the operating carrier's designator or that of another carrier (codeshare).
+    Carrier marketing_carrier_info = 4;
+
+    // An operation between board point and any subsequent off point within the same flight designator.
+    // Could be one or more legs. Could also be used for other transport vehicles such as train or bus etc.
+    Carrier operating_carrier_info = 5;
+    ClassOfService class_of_service = 6;
+
+    // 3-8 char, e.g. WH7LNR
+    string fare_basis_code = 7;
+}
+
+message SelectedFlightItem {
+    string offer_item_id = 1; //validate[strEmpty, strMin(1) ]
+
+    // leg id list
+    repeated string leg_references = 2; //validate[ listMin(1)]
+
+    // segment id list
+    repeated string segment_references = 3; //validate[ listMin(1)]
+
+    // traveler id list
+    repeated string traveler_references = 4; //validate[ listMin(1)]
+
+}
+
+message SelectedOptionalExtras {
+    string offer_item_id = 1;
+
+    // leg id list
+    repeated string leg_references = 2;
+
+    // segment id list
+    repeated string segment_references = 3;
+
+    // traveler id list
+    repeated string traveler_references = 4;
+
+    int32 number_of_unit = 5;
+}
+
+message SelecteSeatItems {
+    string offer_item_id = 1;
+
+    // leg id list
+    repeated string leg_references = 2;
+
+    // segment id list
+    repeated string segment_references = 3;
+
+    // traveler id list
+    repeated string traveler_references = 4;
+
+    string column = 5;
+    string row_number = 6;
+}
+
+message SelectedOffer {
+    string offer_id = 1;
+    repeated SelectedFlightItem selected_flight_items = 2;
+    repeated SelectedOptionalExtras selected_optional_extras = 3;
+    repeated SelecteSeatItems selected_seat_items = 4;
+}
+
+message FlightData {
+    repeated Leg legs = 1;
+    repeated Segment segments = 2;
+}
+
+message PaymentInfo {
+    // A form of procedure for the payment of goods or services,
+    // plus any transactional information specific to the payment method other than the amount.
+    PaymentMethod payment_method = 1;
+    common.PaymentPrice payment_price = 2;
+    string fraud_data_token = 3;
+    common.SecurePayerAuthentication secure_payer_authentication = 4;
+}
+
+message SubmitBookingRQ {
+    // Skyscanner booking reference Identifier.
+    string skyscanner_booking_id = 1;
+    common.BasicInfo basic_info = 2;
+    ContactInfo contact_info = 3;
+
+    // Legs/Segments information
+    FlightData flight_data = 4;
+
+    // Information related to the settlement of a transaction through monetary or other compensations.
+    PaymentInfo payment_info = 5;
+
+    // When TRUE, passenger authorize the airline to share his/her profile information or send promotional email.
+    bool remarketing_consent = 6;
+
+    // Offer selected by the Passenger for requesting an Order to be created,
+    // which could reference (via the offer_id) from a shopping response.
+    SelectedOffer selected_offer = 7;
+
+    // key = traveler's id
+    map<string, TravelerInfo> travelers = 8;
+
+    // Unique shopping session response ID. Example: 1F126AF1-7FCF-414F-8A3D-E4FFA408F747
+    string response_id = 9;
+
+    // For data transmission.
+    // e.g. Data from a shopping request which does not belong to any other categories(flight_data, travelers, etc)
+    // but is required to create an order
+    common.InformationMap additional_infos = 10;
+}
+
+message SubmitBookingRS {
+    // Skyscanner booking reference Identifier.
+    string skyscanner_booking_id = 1;
+    enum Status {
+        // Accepted - confirmed the checkout API has received the booking, waiting to here the end state.
+        // Failed - the booking process has failed for any reason
+        STATUS_UNSET = 0;
+        STATUS_FAILED = 1;
+        STATUS_ACCEPTED = 2;
+    }
+    Status status = 2;
+    common.ErrorResult errors = 3;
+}

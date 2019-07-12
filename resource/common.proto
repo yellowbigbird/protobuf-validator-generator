@@ -1,0 +1,194 @@
+syntax = "proto3";
+
+package common; //version 0.0.9
+option java_multiple_files = true;
+option java_package = "net.skyscanner.halo.megastorm.schema";
+
+message Date {
+    // The year of this date
+    int32 year = 1; //validate[ min(1990)]
+    // The month of this date in the range 1 <= month <= 12
+    int32 month = 2; //validate[ max(12),  min(1)]
+    // The day of this date in the range 1 <= day <= 31
+    int32 day = 3;  //validate[ max(32), min(0)]
+}
+
+
+message InformationMap {
+    map<string, string> info = 1;
+}
+
+
+message City {
+    string city_name = 1; //validate[strEmpty]
+    string iata_location_code = 2; //validate[strEmpty, regex("^[A-Z]{3}$")]
+}
+
+message Country {
+    string country_code = 1; //validate[strEmpty, regex("^[A-Z]{2}$")]
+    string country_name = 2;
+}
+
+message DeviceInfo {
+    string browser_name = 1;
+    string browser_version = 2;
+    enum DeviceType {
+        DEVICE_TYPE_UNSET = 0;
+        DEVICE_TYPE_MOBILE = 1;
+        DEVICE_TYPE_TABLET = 2;
+        DEVICE_TYPE_DESKTOP = 3;
+    }
+    DeviceType device_type = 3;
+    string ip_address_text = 4;
+    string os_name = 5;
+    string os_version = 6;
+    string app_version = 7;
+}
+
+message ErrorResult {
+    // Integer error codes help clients write error handling codes. e.g. 400
+    string error_code_text = 1;
+
+    // Short description of the error.
+    string error_desc = 2;
+
+    // Internal code as defined in zerg. E.g. SKY_PAY_007
+    string sky_code = 3; //validate[strEmpty]
+}
+
+message Fee {
+    Price amount = 1; //validate[has]
+
+    // Fee/ surcharge name.  Example: U.S Customs User Fee
+    string name = 2;
+}
+
+message Location {
+    City city = 1;
+    Country country = 2;
+}
+
+message PointOfSale {
+    DeviceInfo device_info = 1;
+    Location location = 2;
+
+    // e.g.UK,pattern value="^[A-Z]{2}$"
+    string market = 3; //validate[strEmpty, regex("^[A-Z]{2}$")]
+}
+
+// Example: 15000 USD
+message Price {
+    // The 3-letter currency code defined in ISO 4217.
+    string currency_code = 1; //validate[strEmpty, strMin(3), strMax(3), regex("^[A-Z]{3}$")]
+
+    // The whole units of the amount.
+    // For example if `currencyCode` is `"USD"`, then 1 unit is one US dollar.
+    int64 units = 2; //validate[ min(0), max(999999]
+
+    // Number of nano (10^-9) units of the amount.
+    // The value must be between -999,999,999 and +999,999,999 inclusive.
+    // If `units` is positive, `nanos` must be positive or zero.
+    // If `units` is zero, `nanos` can be positive, zero, or negative.
+    // If `units` is negative, `nanos` must be negative or zero.
+    // For example $-1.75 is represented as `units`=-1 and `nanos`=-750,000,000.
+    int32 nanos = 3; //validate[ max(999999999),  min(0)]
+}
+
+message BasicInfo {
+    // The 3-letter currency code defined in ISO 4217. e.g.EUR
+    string currency_code = 1; //validate[strEmpty, regex("^[A-Z]{3}$")]
+
+    // the URL of deeplink
+    string deep_link = 2;
+
+    // e.g.en-GB, pattern value="^[a-z]{2}-[a-zA-Z]{2}$"
+    string locale = 3; //validate[strEmpty, regex("^[a-z]{2}-[a-zA-Z]{2}$")]
+    PointOfSale point_of_sale = 4;
+    enum Proposition {
+        // Identify the the source of the request.
+        PROPOSITION_UNSET = 0;
+        PROPOSITION_DBOOK = 1;
+        PROPOSITION_BWS = 2;
+    }
+    Proposition proposition = 5;
+    bool test_booking = 6;
+
+    // Skyscanner website ID. e.g. byoj
+    string website_id = 7; //validate[strEmpty, strMin(4), strMax(4), regex("^[a-z]{4}$")]
+
+    // a Unique Traveller ID
+    string utid = 8;
+}
+
+message PricedItem {
+    // offer_item_id
+    string offer_item_ref = 1; //validate[strEmpty]
+
+    // Base amount for a specific product, purpose, or service.
+    Fee base = 2;
+
+    // A compulsory contribution to state revenue, levied by the government on workers' income and business profits
+    // or added to the cost of some goods, services, and transactions.
+    repeated Fee surcharges = 3;
+
+    // Amount added on to a charge for a specific product, purpose, or service.
+    repeated Fee taxes = 4;
+    Price total = 5; //validate[has]
+
+    // name shown in webpage
+    string name = 6;
+}
+
+
+message PriceBreakdown {
+    // Surcharge for a specific card type(visa, master, etc).
+    // Where the surcharge is a percentage value of the total amount, values can range from (0.01 to 100).
+    // The value cannot be 0.
+    Fee card_surcharge = 1;
+    repeated PricedItem priced_items = 2;
+}
+
+message PaymentPrice {
+    PriceBreakdown price_breakdown = 1;
+    Price total = 2; //validate[has]
+}
+
+// Data returned from the Directory Server/ACS containing the PAReq and the ACS URL that enable to cardholder to
+// authenticate.  Applicable for 3D Secure Version V 1.0.
+message SecurePayerAuthentication {
+    // Unique 3D Secure transaction reference number assigned by Access Control System (ACS).
+    // Note: This is typically required for ACS systems that support Status Query.
+    string authentication_trx_id = 1;
+
+    // MD. Containing merchant state data that must be returned to the merchant.
+    string merchant_data = 2;
+
+    // PaReq/PaRes: The authentication request/response for the 3-D Secure transaction.
+    string payer_authentication_text = 3;
+
+    // 3DS Access Control System URL.  Note: This is the URL of the Issuing Bank's ACS, to which the cardholder needs
+    // to be re-directed. The browser should simply redirect to this URL.  ACS or Access Control Server
+    string redirection_url = 4;
+
+    // The URL to which the user will be directed to at the conclusion of 3D secure authentication.
+    // Example: http://ba.com/paymentResultSuccess
+    string termination_url = 5;
+
+    // Some payment providers will return a form instead of form data
+    string form = 6;
+}
+
+message Name {
+    string first_name = 1; //validate[strEmpty]
+    string last_name = 2; //validate[strEmpty]
+    string middle_name = 3;
+    enum Title {
+        TITLE_UNSET = 0;
+        TITLE_MR = 1;
+        TITLE_MS = 2;
+        TITLE_MRS = 3;
+        TITLE_MISS = 4;
+        TITLE_DR = 5;
+    }
+    Title title = 4;
+}

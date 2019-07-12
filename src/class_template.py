@@ -4,6 +4,7 @@ PROTO_IMPORT_NAMESPACE = 'import net.skyscanner.halo.megastorm.api.rest.schema.'
 
 CLASS_VALIDATOR = """package net.skyscanner.halo.megastorm.api.rest.validate;
 
+import net.skyscanner.halo.megastorm.api.rest.validate.base.BaseValidator;
 import net.skyscanner.halo.megastorm.api.rest.schema.~proto_class_name~;
 ~import_other_proto_class~
 

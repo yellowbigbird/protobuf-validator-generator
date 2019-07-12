@@ -47,12 +47,13 @@ class Message:
         call_function = ''
         validate_functions = ''
 
-
         for variable in self.list_variable:
+            # if validation exist
+            if not variable.is_validation_exist():
+                continue
             function = variable.generate()
             validate_functions = validate_functions + function
             call_function = '{0}        {1}(listStr);\n'.format(call_function, variable.function_name)
-            pass
 
         import_other_proto_class = ''  # self.generate_other_proto_import()
 
